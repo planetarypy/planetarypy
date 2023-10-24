@@ -13,7 +13,7 @@ with open(here / "README.rst") as readme_file:
 with open(here / "HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ['tomlkit']
+requirements = ["tomlkit"]
 
 setup(
     author="PlanetaryPy Developers",
@@ -31,10 +31,11 @@ setup(
     description="Core package for planetary science tools.",
     entry_points={
         "console_scripts": [
-            'planetarypy=planetarypy.cli:main',
+            "planetarypy=planetarypy.cli:main",
         ],
     },
     install_requires=requirements,
+    include_package_data=True,
     license="BSD license",
     long_description=readme + "\n\n" + history,
     keywords="planetarypy",
