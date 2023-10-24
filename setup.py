@@ -13,20 +13,20 @@ with open(here / "README.rst") as readme_file:
 with open(here / "HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = [ ]
+requirements = ['tomlkit']
 
 setup(
     author="PlanetaryPy Developers",
     author_email="kmichael.aye@gmail.com",
-    python_requires=">=3.6, <4",
+    python_requires=">=3.9, <4",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     description="Core package for planetary science tools.",
     entry_points={
