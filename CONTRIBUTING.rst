@@ -1,6 +1,5 @@
 .. highlight:: shell
 
-============
 Contributing
 ============
 
@@ -19,7 +18,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/michaelaye/planetarypy/issues.
+Report bugs at https://github.com/planetarypy/planetarypy/issues.
 
 If you are reporting a bug, please include:
 
@@ -49,7 +48,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/michaelaye/planetarypy/issues.
+The best way to send feedback is to file an issue at https://github.com/planetarypy/planetarypy/issues.
 
 If you are proposing a feature:
 
@@ -102,20 +101,11 @@ Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 
-1. The pull request should include tests.
+1. The pull request should include tests covering the changes.
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.6, 3.7 and 3.8, and optionally for PyPy. Check
-   https://travis-ci.org/michaelaye/planetarypy/pull_requests
-   and make sure that the tests pass for all supported Python versions.
-
-Tips
-----
-
-To run a subset of tests::
-
-$ pytest tests.test_planetarypy
+3. The pull request should minimally work for Python version 3.9.
 
 
 Deploying
@@ -129,4 +119,4 @@ $ bump2version patch # possible: major / minor / patch
 $ git push
 $ git push --tags
 
-Travis will then deploy to PyPI if tests pass.
+Deployment to pypi to be determined.
