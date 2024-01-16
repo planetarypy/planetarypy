@@ -75,6 +75,15 @@ class Config:
         """get the Python dic from"""
         return self.tomldoc
 
+    def __getitem__(self, key: str):
+        """Get sub-dictionary by nested key."""
+        if not key.startswith("missions"):
+            key = "missions." + key
+        try:
+            return reduce(lambda c, k: c[k], key.split("."), self.d)
+        except toml.exceptions.NonExistentKey:
+            return ""
+
     def get_value(
         self, key: str  # A nested key in dotted format, e.g. cassini.uvis.indexes
     ) -> (
@@ -102,6 +111,15 @@ class Config:
         dic[keys[-1]] = value
         if save:
             self.save()
+
+    def __setitem__(self, nested_key: str, value: Union[float, str]):
+        """Set value in sub-dic using dotted key."""
+        dic = self.tomldoc
+        keys = nested_key.split(".")
+        for key in keys[:-1]:
+            dic = dic[key]
+        dic[keys[-1]] = value
+        self.save()
 
     def save(self):
         """Write the TOML doc to file."""
