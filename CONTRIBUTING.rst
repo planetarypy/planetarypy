@@ -1,6 +1,5 @@
 .. highlight:: shell
 
-============
 Contributing
 ============
 
@@ -19,7 +18,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/michaelaye/planetarypy/issues.
+Report bugs at https://github.com/planetarypy/planetarypy/issues.
 
 If you are reporting a bug, please include:
 
@@ -49,7 +48,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/michaelaye/planetarypy/issues.
+The best way to send feedback is to file an issue at https://github.com/planetarypy/planetarypy/issues.
 
 If you are proposing a feature:
 
@@ -92,7 +91,9 @@ Ready to contribute? Here's how to set up `planetarypy` for local development.
 6. Commit your changes and push your branch to GitHub::
 
     $ git add .
-    $ git commit -m "Your detailed description of your changes."
+    $ git commit -m "Changes summary
+
+        Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
 7. Submit a pull request through the GitHub website.
@@ -102,21 +103,28 @@ Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 
-1. The pull request should include tests.
+1. The pull request should include tests covering the changes.
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.6, 3.7 and 3.8, and optionally for PyPy. Check
-   https://travis-ci.org/michaelaye/planetarypy/pull_requests
-   and make sure that the tests pass for all supported Python versions.
+3. The pull request should minimally work for Python version 3.9.
 
-Tips
-----
+The action protocol, specifically timeline and reviews for pull requests as described in
+https://github.com/planetarypy/TC/blob/master/Contributing.md#contributions
+is applicable here, with the following changes for the time being and to be reviewed later:
 
-To run a subset of tests::
+In order to merge a PR, it must satisfy **ONLY ONE** condition:
 
-$ pytest tests.test_planetarypy
+* have **ONE** approval
 
+Also, for this early stage of filling up the core package, we add the special rule, that
+
+* after three days without a review, the PR can be merged by the requester.
+
+We emphasize that this is only done temporarily to support a quicker growth and this
+procedure will be reviewed as soon as we feel that the core package either
+has a significant number of users and/or that PRs break available functionality on a
+regular basis, due to a lack of reviews.
 
 Deploying
 ---------
@@ -129,4 +137,4 @@ $ bump2version patch # possible: major / minor / patch
 $ git push
 $ git push --tags
 
-Travis will then deploy to PyPI if tests pass.
+Deployment to pypi to be determined.
