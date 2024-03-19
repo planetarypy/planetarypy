@@ -91,7 +91,9 @@ Ready to contribute? Here's how to set up `planetarypy` for local development.
 6. Commit your changes and push your branch to GitHub::
 
     $ git add .
-    $ git commit -m "Your detailed description of your changes."
+    $ git commit -m "Changes summary
+
+        Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
 7. Submit a pull request through the GitHub website.
@@ -107,6 +109,22 @@ Before you submit a pull request, check that it meets these guidelines:
    feature to the list in README.rst.
 3. The pull request should minimally work for Python version 3.9.
 
+The action protocol, specifically timeline and reviews for pull requests as described in
+https://github.com/planetarypy/TC/blob/master/Contributing.md#contributions
+is applicable here, with the following changes for the time being and to be reviewed later:
+
+In order to merge a PR, it must satisfy **ONLY ONE** condition:
+
+* have **ONE** approval
+
+Also, for this early stage of filling up the core package, we add the special rule, that
+
+* after three days without a review, the PR can be merged by the requester.
+
+We emphasize that this is only done temporarily to support a quicker growth and this
+procedure will be reviewed as soon as we feel that the core package either
+has a significant number of users and/or that PRs break available functionality on a
+regular basis, due to a lack of reviews.
 
 Deploying
 ---------
