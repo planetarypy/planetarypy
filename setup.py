@@ -13,7 +13,8 @@ with open(here / "README.rst") as readme_file:
 with open(here / "HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ["tomlkit"]
+requirements = ["tomlkit", "requests", "tqdm", "pandas"]
+dev_requirements = ["pytest"]
 
 setup(
     author="PlanetaryPy Developers",
@@ -35,6 +36,7 @@ setup(
         ],
     },
     install_requires=requirements,
+    extras_require={'dev': dev_requirements},
     include_package_data=True,
     license="BSD license",
     long_description=readme + "\n\n" + history,
@@ -44,6 +46,6 @@ setup(
     packages=find_packages(where="src"),
     test_suite="tests",
     tests_require=["pytest"],
-    url="https://github.com/michaelaye/planetarypy",
+    url="https://github.com/planetarypy/planetarypy",
     version="0.1.0",
 )
