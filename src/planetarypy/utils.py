@@ -1,33 +1,8 @@
 """General utility functions for planetarypy."""
-
-__all__ = [
-    "logger",
-    "nasa_date_format",
-    "nasa_dt_format",
-    "nasa_dt_format_with_ms",
-    "iso_date_format",
-    "iso_dt_format",
-    "iso_dt_format_with_ms",
-    "nasa_time_to_datetime",
-    "nasa_time_to_iso",
-    "iso_to_nasa_time",
-    "iso_to_nasa_datetime",
-    "replace_all_nasa_times",
-    "parse_http_date",
-    "get_remote_timestamp",
-    "check_url_exists",
-    "url_retrieve",
-    "have_internet",
-    "height_from_shadow",
-    "file_variations",
-]
-
-
 import datetime as dt
 import email.utils as eut
 import http.client as httplib
 import logging
-from math import radians, tan
 from pathlib import Path
 from typing import Union
 from urllib.request import urlopen
@@ -43,36 +18,36 @@ logger = logging.getLogger(__name__)
 # Define the different format strings these utils convert from and to.
 # Identifiers with xxx_dt_format_xxx signify a full datetime format as
 # compared to dates only.
-nasa_date_format = "%Y-%j"
-nasa_dt_format = nasa_date_format + "T%H:%M:%S"
-nasa_dt_format_with_ms = nasa_dt_format + ".%f"
-iso_date_format = "%Y-%m-%d"
-iso_dt_format = iso_date_format + "T%H:%M:%S"
-iso_dt_format_with_ms = iso_dt_format + ".%f"
+ordinal_date_format = "%Y-%j"
+ordinal_dt_format = ordinal_date_format + "T%H:%M:%S"
+ordinal_dt_format_with_ms = ordinal_dt_format + ".%f"
+calendar_date_format = "%Y-%m-%d"
+calendar_dt_format = calendar_date_format + "T%H:%M:%S"
+calendar_dt_format_with_ms = calendar_dt_format + ".%f"
 
 
-## NASA date to datetime and ISO
-# What we call NASA data, is the often used YYYY-JJJ based format in the
+## Ordinal date to datetime and calendar
+# What we call ordinal dates, are the often used yyyy-jjj based format in the
 # Planetary Data System identifying dates via the running number of the day
 # in the year, e.g. "2010-240".
-def _nasa_date_to_datetime(datestr: str) -> dt.datetime:
-    """Convert date string of the form Y-j to datetime."""
-    return dt.datetime.strptime(datestr, nasa_date_format)
+def _ordinal_date_to_datetime(datestr: str) -> dt.datetime:
+    """Convert date string of the form yyyy-jjj to datetime."""
+    return dt.datetime.strptime(datestr, ordinal_date_format)
 
 
-def _nasa_datetime_to_datetime(datetimestr: str) -> dt.datetime:
-    """Convert datetime string of the form Y-jTH:M:S to datetime."""
-    return dt.datetime.strptime(datetimestr, nasa_dt_format)
+def _ordinal_datetime_to_datetime(datetimestr: str) -> dt.datetime:
+    """Convert datetime string of the form yyyy-jjjTH:M:S to datetime."""
+    return dt.datetime.strptime(datetimestr, ordinal_dt_format)
 
 
-def _nasa_datetimems_to_datetime(datetimestr: str) -> dt.datetime:
-    """Convert datetimestr of the form Y-jTH:M:S.xxx to datetime."""
-    return dt.datetime.strptime(datetimestr, nasa_dt_format_with_ms)
+def _ordinal_datetimems_to_datetime(datetimestr: str) -> dt.datetime:
+    """Convert datetimestr of the form yyyy-jjjTH:M:S.xxx to datetime."""
+    return dt.datetime.strptime(datetimestr, ordinal_dt_format_with_ms)
 
 
-def nasa_time_to_datetime(inputstr) -> dt.datetime:
+def ordinal_time_to_datetime(inputstr) -> dt.datetime:
     """
-    Convert NASA PDS datestrings with day_of_year (jjj) into datetimes.
+    Convert ordinal (day-of year) datestrings into datetimes.
     
     Parameters
     ----------
@@ -80,17 +55,17 @@ def nasa_time_to_datetime(inputstr) -> dt.datetime:
         Datestring of the form yyyy-jjj(THH:MM:SS)(.ffffff)
     """
     try:
-        return _nasa_datetime_to_datetime(inputstr)
+        return _ordinal_datetime_to_datetime(inputstr)
     except ValueError:
         try:
-            return _nasa_date_to_datetime(inputstr)
+            return _ordinal_date_to_datetime(inputstr)
         except ValueError:
-            return _nasa_datetimems_to_datetime(inputstr)
+            return _ordinal_datetimems_to_datetime(inputstr)
 
 
-def nasa_time_to_iso(inputstr: str, with_hours: bool = False) -> str:
+def ordinal_time_to_calendar(inputstr: str, with_hours: bool = False) -> str:
     """
-    Convert NASA datetime format to ISO format.
+    Convert ordinal datetime format to calendar format.
 
     E.g., 2010-110(T10:12:14)" -> 2010-04-20(T10:12:14)
 
@@ -99,24 +74,24 @@ def nasa_time_to_iso(inputstr: str, with_hours: bool = False) -> str:
     inputstr : str
         Datestring of the form yyyy-jjj(THH:MM:SS)(.ffffff)
     with_hours : bool
-        Return ISO with hours or not. Default is False.
+        Return calendar with hours or not. Default is False.
     """
     has_hours = False
     # check if input has hours
     try:
-        res = _nasa_date_to_datetime(inputstr)
+        res = _ordinal_date_to_datetime(inputstr)
     except ValueError:
         has_hours = True
-    time = nasa_time_to_datetime(inputstr)
+    time = ordinal_time_to_datetime(inputstr)
     if has_hours or with_hours is True:
         return time.isoformat()
     else:
-        return time.strftime(iso_date_format)
+        return time.strftime(calendar_date_format)
 
 
-def iso_to_nasa_time(inputstr: str) -> str:
+def calendar_to_ordinal_time(inputstr: str) -> str:
     """
-    Convert ISO datetime format to NASA datetime format.
+    Convert calendar datetime format to ordinal datetime format.
 
     E.g., 2010-04-20(T10:12:14) -> 2010-110(T10:12:14)
 
@@ -126,22 +101,22 @@ def iso_to_nasa_time(inputstr: str) -> str:
         Datestring of the form yyyy-mm-dd(THH:MM:SS)(.ffffff)
     """
     try:
-        date = dt.datetime.strptime(inputstr, iso_date_format)
+        date = dt.datetime.strptime(inputstr, calendar_date_format)
     except ValueError:
         try:
-            date = dt.datetime.strptime(inputstr, iso_dt_format)
+            date = dt.datetime.strptime(inputstr, calendar_dt_format)
         except ValueError:
-            date = dt.datetime.strptime(inputstr, iso_dt_format_with_ms)
-            return date.strftime(nasa_dt_format_with_ms)
+            date = dt.datetime.strptime(inputstr, calendar_dt_format_with_ms)
+            return date.strftime(ordinal_dt_format_with_ms)
         else:
-            return date.strftime(nasa_dt_format)
+            return date.strftime(ordinal_dt_format)
     else:
-        return date.strftime(nasa_date_format)
+        return date.strftime(ordinal_date_format)
 
 
-def iso_to_nasa_datetime(dtimestr: str) -> str:
+def calendar_to_ordinal_datetime(dtimestr: str) -> str:
     """
-    Convert ISO datetime format to NASA datetime format.
+    Convert calendar datetime format to ordinal datetime format.
 
     E.g., 2010-04-20(T10:12:14) -> 2010-110(T10:12:14)
 
@@ -153,25 +128,25 @@ def iso_to_nasa_datetime(dtimestr: str) -> str:
     try:
         dtimestr.split(".")[1]
     except IndexError:
-        source_format = iso_dt_format
-        target_format = nasa_dt_format
+        source_format = calendar_dt_format
+        target_format = ordinal_dt_format
     else:
-        source_format = iso_dt_format_with_ms
-        target_format = nasa_dt_format_with_ms
+        source_format = calendar_dt_format_with_ms
+        target_format = ordinal_dt_format_with_ms
     date = dt.datetime.strptime(dtimestr, source_format)
     return date.strftime(target_format)
 
 
-def replace_all_nasa_times(df: pd.DataFrame):
+def replace_all_ordinal_times(df: pd.DataFrame):
     """
-    Convert all detected NASA time columns in df to ISO format in place.
+    Convert all detected ordinal time columns in df to calendar format in place.
 
     All columns with "TIME" in the name will be converted and changes will be 
     implemented on incoming dataframe in place (no returned dataframe)!
     """
     for col in [col for col in df.columns if "TIME" in col]:
         if "T" in df[col].iloc[0]:
-            df[col] = pd.to_datetime(df[col].map(nasa_time_to_iso))
+            df[col] = pd.to_datetime(df[col].map(ordinal_time_to_calendar))
 
 
 ## Network and file handling
@@ -262,24 +237,6 @@ def have_internet():
         return False
     finally:
         conn.close()
-
-
-## Image processing helpers
-def height_from_shadow(shadow_in_pixels: float, sun_elev: float) -> float:
-    """
-    Calculate height of an object from its shadow length.
-
-    Note, that your image might have been binned.
-    You need to correct `shadow_in_pixels` for that.
-
-    Parameters
-    ----------
-    shadow_in_pixels : float
-        Measured length of shadow in pixels.
-    sun_elev : float
-        Angle of sun over horizon in degrees.
-    """
-    return tan(radians(sun_elev)) * shadow_in_pixels
 
 
 def file_variations(filename: Union[str, Path], extensions: list) -> list:
