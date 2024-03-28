@@ -1,4 +1,26 @@
 """General utility functions for planetarypy."""
+
+__all__ = [
+    "logger",
+    "ordinal_date_format",
+    "ordinal_dt_format",
+    "ordinal_dt_format_with_ms",
+    "calendar_date_format",
+    "calendar_dt_format",
+    "calendar_dt_format_with_ms",
+    "ordinal_time_to_datetime",
+    "ordinal_time_to_calendar",
+    "calendar_to_ordinal_time",
+    "calendar_to_ordinal_datetime",
+    "replace_all_ordinal_times",
+    "parse_http_date",
+    "get_remote_timestamp",
+    "check_url_exists",
+    "url_retrieve",
+    "have_internet",
+    "file_variations",
+]
+
 import datetime as dt
 import email.utils as eut
 import http.client as httplib
@@ -30,40 +52,40 @@ calendar_dt_format_with_ms = calendar_dt_format + ".%f"
 # What we call ordinal dates, are the often used yyyy-jjj based format in the
 # Planetary Data System identifying dates via the running number of the day
 # in the year, e.g. "2010-240".
-def _ordinal_date_to_datetime(datestr: str) -> dt.datetime:
+def _ordinal_date_to_datetime(date: str) -> dt.datetime:
     """Convert date string of the form yyyy-jjj to datetime."""
-    return dt.datetime.strptime(datestr, ordinal_date_format)
+    return dt.datetime.strptime(date, ordinal_date_format)
 
 
-def _ordinal_datetime_to_datetime(datetimestr: str) -> dt.datetime:
+def _ordinal_datetime_to_datetime(datetime: str) -> dt.datetime:
     """Convert datetime string of the form yyyy-jjjTH:M:S to datetime."""
-    return dt.datetime.strptime(datetimestr, ordinal_dt_format)
+    return dt.datetime.strptime(datetime, ordinal_dt_format)
 
 
-def _ordinal_datetimems_to_datetime(datetimestr: str) -> dt.datetime:
+def _ordinal_datetimems_to_datetime(datetime: str) -> dt.datetime:
     """Convert datetimestr of the form yyyy-jjjTH:M:S.xxx to datetime."""
-    return dt.datetime.strptime(datetimestr, ordinal_dt_format_with_ms)
+    return dt.datetime.strptime(datetime, ordinal_dt_format_with_ms)
 
 
-def ordinal_time_to_datetime(inputstr) -> dt.datetime:
+def ordinal_time_to_datetime(ordinal_datetime: str) -> dt.datetime:
     """
     Convert ordinal (day-of year) datestrings into datetimes.
     
     Parameters
     ----------
-    inputstr : str
-        Datestring of the form yyyy-jjj(THH:MM:SS)(.ffffff)
+    ordinal_datetime : str
+        Datetime string of the form yyyy-jjj(THH:MM:SS)(.ffffff)
     """
     try:
-        return _ordinal_datetime_to_datetime(inputstr)
+        return _ordinal_datetime_to_datetime(ordinal_datetime)
     except ValueError:
         try:
-            return _ordinal_date_to_datetime(inputstr)
+            return _ordinal_date_to_datetime(ordinal_datetime)
         except ValueError:
-            return _ordinal_datetimems_to_datetime(inputstr)
+            return _ordinal_datetimems_to_datetime(ordinal_datetime)
 
 
-def ordinal_time_to_calendar(inputstr: str, with_hours: bool = False) -> str:
+def ordinal_time_to_calendar(ordinal_datetime: str, with_hours: bool = False) -> str:
     """
     Convert ordinal datetime format to calendar format.
 
@@ -71,25 +93,25 @@ def ordinal_time_to_calendar(inputstr: str, with_hours: bool = False) -> str:
 
     Parameters
     ----------
-    inputstr : str
-        Datestring of the form yyyy-jjj(THH:MM:SS)(.ffffff)
+    ordinal_datetime : str
+        Datetime string of the form yyyy-jjj(THH:MM:SS)(.ffffff)
     with_hours : bool
         Return calendar with hours or not. Default is False.
     """
     has_hours = False
     # check if input has hours
     try:
-        res = _ordinal_date_to_datetime(inputstr)
+        res = _ordinal_date_to_datetime(ordinal_datetime)
     except ValueError:
         has_hours = True
-    time = ordinal_time_to_datetime(inputstr)
+    time = ordinal_time_to_datetime(ordinal_datetime)
     if has_hours or with_hours is True:
         return time.isoformat()
     else:
         return time.strftime(calendar_date_format)
 
 
-def calendar_to_ordinal_time(inputstr: str) -> str:
+def calendar_to_ordinal_time(cal_datetime: str) -> str:
     """
     Convert calendar datetime format to ordinal datetime format.
 
@@ -97,16 +119,16 @@ def calendar_to_ordinal_time(inputstr: str) -> str:
 
     Parameters
     ----------
-    inputstr : str
+    cal_datetime : str
         Datestring of the form yyyy-mm-dd(THH:MM:SS)(.ffffff)
     """
     try:
-        date = dt.datetime.strptime(inputstr, calendar_date_format)
+        date = dt.datetime.strptime(cal_datetime, calendar_date_format)
     except ValueError:
         try:
-            date = dt.datetime.strptime(inputstr, calendar_dt_format)
+            date = dt.datetime.strptime(cal_datetime, calendar_dt_format)
         except ValueError:
-            date = dt.datetime.strptime(inputstr, calendar_dt_format_with_ms)
+            date = dt.datetime.strptime(cal_datetime, calendar_dt_format_with_ms)
             return date.strftime(ordinal_dt_format_with_ms)
         else:
             return date.strftime(ordinal_dt_format)
@@ -114,7 +136,7 @@ def calendar_to_ordinal_time(inputstr: str) -> str:
         return date.strftime(ordinal_date_format)
 
 
-def calendar_to_ordinal_datetime(dtimestr: str) -> str:
+def calendar_to_ordinal_datetime(cal_datetime: str) -> str:
     """
     Convert calendar datetime format to ordinal datetime format.
 
@@ -122,37 +144,37 @@ def calendar_to_ordinal_datetime(dtimestr: str) -> str:
 
     Parameters
     ----------
-    dtimestr : str
+    cal_datetime : str
         Datestring of the form yyyy-mm-dd(THH:MM:SS)(.ffffff)
     """
     try:
-        dtimestr.split(".")[1]
+        cal_datetime.split(".")[1]
     except IndexError:
         source_format = calendar_dt_format
         target_format = ordinal_dt_format
     else:
         source_format = calendar_dt_format_with_ms
         target_format = ordinal_dt_format_with_ms
-    date = dt.datetime.strptime(dtimestr, source_format)
+    date = dt.datetime.strptime(cal_datetime, source_format)
     return date.strftime(target_format)
 
 
-def replace_all_ordinal_times(df: pd.DataFrame):
+def replace_all_ordinal_times(df: pd.DataFrame, timecol: str = "TIME"):
     """
     Convert all detected ordinal time columns in df to calendar format in place.
 
-    All columns with "TIME" in the name will be converted and changes will be 
+    All columns with timecol in the name will be converted and changes will be 
     implemented on incoming dataframe in place (no returned dataframe)!
     """
-    for col in [col for col in df.columns if "TIME" in col]:
+    for col in [col for col in df.columns if timecol in col]:
         if "T" in df[col].iloc[0]:
             df[col] = pd.to_datetime(df[col].map(ordinal_time_to_calendar))
 
 
 ## Network and file handling
-def parse_http_date(http_datestr: str) -> dt.datetime:
+def parse_http_date(http_date: str) -> dt.datetime:
     """Parse date string retrieved via urllib.request."""
-    return dt.datetime(*eut.parsedate(http_datestr)[:6])
+    return dt.datetime(*eut.parsedate(http_date)[:6])
 
 
 def get_remote_timestamp(url: str) -> dt.datetime:
@@ -169,10 +191,7 @@ def get_remote_timestamp(url: str) -> dt.datetime:
 def check_url_exists(url):
     """Check if a URL exists."""
     response = requests.head(url)
-    if response.status_code < 400:
-        return True
-    else:
-        return False
+    return response.status_code < 400
 
 
 def url_retrieve(url: str, 
