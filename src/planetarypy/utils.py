@@ -167,8 +167,7 @@ def replace_all_ordinal_times(df: pd.DataFrame, timecol: str = "TIME"):
     implemented on incoming dataframe in place (no returned dataframe)!
     """
     for col in [col for col in df.columns if timecol in col]:
-        if "T" in df[col].iloc[0]:
-            df[col] = pd.to_datetime(df[col].map(ordinal_time_to_calendar))
+        df[col] = pd.to_datetime(df[col].map(ordinal_time_to_calendar))
 
 
 ## Network and file handling
