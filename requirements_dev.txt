@@ -1,4 +1,5 @@
 pip
+black
 bump2version
 wheel
 watchdog
