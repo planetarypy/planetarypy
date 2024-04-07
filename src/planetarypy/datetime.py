@@ -1,4 +1,4 @@
-"""This module contains a derived datetime functions with extended
+"""This module contains datetime functions with extended
 ISO 8601 handling to deal with day-of-year formats and trailing "Z"
 characters instead of +00:00 to indicate UTC.
 """
