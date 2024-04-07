@@ -25,13 +25,13 @@ def doyformat(date_time: datetime.datetime, sep="T", timespec="auto") -> str:
     the date portion in ISO 8601 Ordinal date format, also known as
     day-of-year format:
 
-        - YYYY-DDDTHH:MM:SS.ffffff, if microsecond is not 0
-        - YYYY-DDDTHH:MM:SS, if microsecond is 0
+    * YYYY-DDDTHH:MM:SS.ffffff, if microsecond is not 0
+    * YYYY-DDDTHH:MM:SS, if microsecond is 0
 
     If utcoffset() does not return None, a string is appended, giving the UTC offset:
 
-        - YYYY-DDDTHH:MM:SS.ffffff+HH:MM[:SS[.ffffff]], if microsecond is not 0
-        - YYYY-DDDTHH:MM:SS+HH:MM[:SS[.ffffff]], if microsecond is 0
+    * YYYY-DDDTHH:MM:SS.ffffff+HH:MM[:SS[.ffffff]], if microsecond is not 0
+    * YYYY-DDDTHH:MM:SS+HH:MM[:SS[.ffffff]], if microsecond is 0
 
     This function is similar to the standard library's
     datetime.datetime.isoformat() function (see that documentation
@@ -54,7 +54,7 @@ def fromdoyformat(date_string) -> datetime.datetime:
 
     Specifically, this function supports strings in the format:
 
-        - YYYY-DDD[*HH[:MM[:SS[.fff[fff]]]][+HH:MM[:SS[.ffffff]]]]
+    * YYYY-DDD[*HH[:MM[:SS[.fff[fff]]]][+HH:MM[:SS[.ffffff]]]]
 
     where * can match any single character.
 
