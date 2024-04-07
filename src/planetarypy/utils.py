@@ -2,17 +2,7 @@
 
 __all__ = [
     "logger",
-    "ordinal_date_format",
-    "ordinal_dt_format",
-    "ordinal_dt_format_with_ms",
-    "calendar_date_format",
-    "calendar_dt_format",
-    "calendar_dt_format_with_ms",
-    "ordinal_time_to_datetime",
-    "ordinal_time_to_calendar",
-    "calendar_to_ordinal_time",
-    "calendar_to_ordinal_datetime",
-    "replace_all_ordinal_times",
+    "replace_all_doy_times",
     "parse_http_date",
     "get_remote_timestamp",
     "check_url_exists",
@@ -34,143 +24,24 @@ from requests.auth import HTTPBasicAuth
 from tqdm.auto import tqdm
 
 import pandas as pd
+from planetarypy.datetime import fromdoyformat
 
 logger = logging.getLogger(__name__)
 
-# Define the different format strings these utils convert from and to.
-# Identifiers with xxx_dt_format_xxx signify a full datetime format as
-# compared to dates only.
-ordinal_date_format = "%Y-%j"
-ordinal_dt_format = ordinal_date_format + "T%H:%M:%S"
-ordinal_dt_format_with_ms = ordinal_dt_format + ".%f"
-calendar_date_format = "%Y-%m-%d"
-calendar_dt_format = calendar_date_format + "T%H:%M:%S"
-calendar_dt_format_with_ms = calendar_dt_format + ".%f"
 
-
-## Ordinal date to datetime and calendar
-# What we call ordinal dates, are the often used yyyy-jjj based format in the
-# Planetary Data System identifying dates via the running number of the day
-# in the year, e.g. "2010-240".
-def _ordinal_date_to_datetime(date: str) -> dt.datetime:
-    """Convert date string of the form yyyy-jjj to datetime."""
-    return dt.datetime.strptime(date, ordinal_date_format)
-
-
-def _ordinal_datetime_to_datetime(datetime: str) -> dt.datetime:
-    """Convert datetime string of the form yyyy-jjjTH:M:S to datetime."""
-    return dt.datetime.strptime(datetime, ordinal_dt_format)
-
-
-def _ordinal_datetimems_to_datetime(datetime: str) -> dt.datetime:
-    """Convert datetimestr of the form yyyy-jjjTH:M:S.xxx to datetime."""
-    return dt.datetime.strptime(datetime, ordinal_dt_format_with_ms)
-
-
-def ordinal_time_to_datetime(ordinal_datetime: str) -> dt.datetime:
+def replace_all_doy_times(df: pd.DataFrame, timecol: str = "TIME"):
     """
-    Convert ordinal (day-of year) datestrings into datetimes.
-    
-    Parameters
-    ----------
-    ordinal_datetime : str
-        Datetime string of the form yyyy-jjj(THH:MM:SS)(.ffffff)
-    """
-    try:
-        return _ordinal_datetime_to_datetime(ordinal_datetime)
-    except ValueError:
-        try:
-            return _ordinal_date_to_datetime(ordinal_datetime)
-        except ValueError:
-            return _ordinal_datetimems_to_datetime(ordinal_datetime)
+    Convert all detected DOY time columns in df to datetimes in place.
 
-
-def ordinal_time_to_calendar(ordinal_datetime: str, with_hours: bool = False) -> str:
-    """
-    Convert ordinal datetime format to calendar format.
-
-    E.g., 2010-110(T10:12:14)" -> 2010-04-20(T10:12:14)
-
-    Parameters
-    ----------
-    ordinal_datetime : str
-        Datetime string of the form yyyy-jjj(THH:MM:SS)(.ffffff)
-    with_hours : bool
-        Return calendar with hours or not. Default is False.
-    """
-    has_hours = False
-    # check if input has hours
-    try:
-        res = _ordinal_date_to_datetime(ordinal_datetime)
-    except ValueError:
-        has_hours = True
-    time = ordinal_time_to_datetime(ordinal_datetime)
-    if has_hours or with_hours is True:
-        return time.isoformat()
-    else:
-        return time.strftime(calendar_date_format)
-
-
-def calendar_to_ordinal_time(cal_datetime: str) -> str:
-    """
-    Convert calendar datetime format to ordinal datetime format.
-
-    E.g., 2010-04-20(T10:12:14) -> 2010-110(T10:12:14)
-
-    Parameters
-    ----------
-    cal_datetime : str
-        Datestring of the form yyyy-mm-dd(THH:MM:SS)(.ffffff)
-    """
-    try:
-        date = dt.datetime.strptime(cal_datetime, calendar_date_format)
-    except ValueError:
-        try:
-            date = dt.datetime.strptime(cal_datetime, calendar_dt_format)
-        except ValueError:
-            date = dt.datetime.strptime(cal_datetime, calendar_dt_format_with_ms)
-            return date.strftime(ordinal_dt_format_with_ms)
-        else:
-            return date.strftime(ordinal_dt_format)
-    else:
-        return date.strftime(ordinal_date_format)
-
-
-def calendar_to_ordinal_datetime(cal_datetime: str) -> str:
-    """
-    Convert calendar datetime format to ordinal datetime format.
-
-    E.g., 2010-04-20(T10:12:14) -> 2010-110(T10:12:14)
-
-    Parameters
-    ----------
-    cal_datetime : str
-        Datestring of the form yyyy-mm-dd(THH:MM:SS)(.ffffff)
-    """
-    try:
-        cal_datetime.split(".")[1]
-    except IndexError:
-        source_format = calendar_dt_format
-        target_format = ordinal_dt_format
-    else:
-        source_format = calendar_dt_format_with_ms
-        target_format = ordinal_dt_format_with_ms
-    date = dt.datetime.strptime(cal_datetime, source_format)
-    return date.strftime(target_format)
-
-
-def replace_all_ordinal_times(df: pd.DataFrame, timecol: str = "TIME"):
-    """
-    Convert all detected ordinal time columns in df to calendar format in place.
-
-    All columns with timecol in the name will be converted and changes will be 
+    All columns with timecol in the name will be converted and changes will be
     implemented on incoming dataframe in place (no returned dataframe)!
     """
+
     for col in [col for col in df.columns if timecol in col]:
-        df[col] = pd.to_datetime(df[col].map(ordinal_time_to_calendar))
+        df[col] = df[col].map(fromdoyformat)
 
 
-## Network and file handling
+# Network and file handling
 def parse_http_date(http_date: str) -> dt.datetime:
     """Parse date string retrieved via urllib.request."""
     return dt.datetime(*eut.parsedate(http_date)[:6])
@@ -193,12 +64,13 @@ def check_url_exists(url):
     return response.status_code < 400
 
 
-def url_retrieve(url: str, 
-                 outfile: str,
-                 chunk_size: int = 4096,  
-                 user: str = None,  
-                 passwd: str = None,
-                 ):
+def url_retrieve(
+    url: str,
+    outfile: str,
+    chunk_size: int = 4096,
+    user: str = None,
+    passwd: str = None,
+):
     """
     Downloads a file from url to outfile.
 
