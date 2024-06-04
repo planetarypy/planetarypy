@@ -1,9 +1,23 @@
 """SPICE kernels management."""
 
-__all__ = ['KERNEL_STORAGE', 'dataset_ids', 'df', 'df2', 'datasets', 'NAIF_URL', 'BASE_URL', 'GENERIC_STORAGE', 'GENERIC_URL',
-           'generic_kernel_names', 'generic_kernel_paths', 'is_start_valid', 'is_stop_valid', 'download_one_url',
-           'Subsetter', 'get_metakernel_and_files', 'list_kernels_for_day', 'download_generic_kernels',
-           'load_generic_kernels', 'show_loaded_kernels']
+__all__ = [
+    "KERNEL_STORAGE",
+    "NAIF_URL",
+    "BASE_URL",
+    "GENERIC_STORAGE",
+    "GENERIC_URL",
+    "generic_kernel_names",
+    "generic_kernel_paths",
+    "is_start_valid",
+    "is_stop_valid",
+    "download_one_url",
+    "Subsetter",
+    "get_metakernel_and_files",
+    "list_kernels_for_day",
+    "download_generic_kernels",
+    "load_generic_kernels",
+    "show_loaded_kernels",
+]
 
 import zipfile
 from datetime import timedelta
@@ -12,6 +26,7 @@ from itertools import repeat
 from multiprocessing import cpu_count
 from pathlib import Path
 
+import pandas as pd
 import requests
 import spiceypy as spice
 from astropy.time import Time
@@ -20,66 +35,15 @@ from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 from yarl import URL
 
-import pandas as pd
 from ..config import config
 from ..utils import nasa_time_to_iso, url_retrieve
-
 
 KERNEL_STORAGE = config.storage_root / "spice_kernels"
 KERNEL_STORAGE.mkdir(exist_ok=True, parents=True)
 
+datasets_url = "https://raw.githubusercontent.com/planetarypy/planetarypy_configs/main/archived_spice_kernel_sets.csv"
 
-dataset_ids = {
-    "bc": "bc/bc_spice",
-    "cassini": "co-s_j_e_v-spice-6-v1.0/cosp_1000",
-    "clementine": "clem1-l-spice-6-v1.0/clsp_1000",
-    "dart": "dart/dart_spice",
-    "dawn": "dawn-m_a-spice-6-v1.0/dawnsp_1000",
-    "di": "di-c-spice-6-v1.0/disp_1000",
-    "ds1": "ds1-a_c-spice-6-v1.0/ds1sp_1000",
-    "epoxi": "dif-c_e_x-spice-6-v1.0/epxsp_1000",
-    "em16": "em16/em16_spice",
-    "grail": "grail-l-spice-6-v1.0/grlsp_1000",
-    "hayabusa": "hay-a-spice-6-v1.0/haysp_1000",
-    "insight": "insight/insight_spice",
-    "juno": "jno-j_e_ss-spice-6-v1.0/jnosp_1000",
-    "ladee": "ladee/ladee_spice",
-    "lro": "lro-l-spice-6-v1.0/lrosp_1000",
-    "maven": "maven/maven_spice",
-    "opportunity": "mer1-m-spice-6-v1.0/mer1sp_1000",
-    "spirit": "mer2-m-spice-6-v1.0/mer2sp_1000",
-    "messenger": "mess-e_v_h-spice-6-v1.0/messsp_1000",
-    "mars2020": "mars2020/mars2020_spice",
-    "mex": "mex-e_m-spice-6-v2.0/mexsp_2000",
-    "mgs": "mgs-m-spice-6-v1.0/mgsp_1000",
-    "ody": "ody-m-spice-6-v1.0/odsp_1000",
-    "mro": "mro-m-spice-6-v1.0/mrosp_1000",
-    "msl": "msl-m-spice-6-v1.0/mslsp_1000",
-    "near": "near-a-spice-6-v1.0/nearsp_1000",
-    "nh": "nh-j_p_ss-spice-6-v1.0/nhsp_1000",
-    "orex": "orex/orex_spice",
-    "rosetta": "ro_rl-e_m_a_c-spice-6-v1.0/rossp_1000",
-    "stardust": "sdu-c-spice-6-v1.0/sdsp_1000",
-    "venus_climate_orbiter": "vco/vco_spice",
-    "vex": "vex-e_v-spice-6-v2.0/vexsp_2000",
-    "vo": "vo1_vo2-m-spice-6-v1.0/vosp_1000",
-}
-
-
-## Identifying and downloading kernel sets
-# One repeating task for SPICE calculations is the identification and 
-# retrieval of all SPICE kernels for a mission for a given time interval.
-# The folks at NAIF offer a "Subset" feature at their servers. Here we set up 
-# a table of the currently supported datasets:
-df = pd.DataFrame({"shorthand": dataset_ids.keys(), "path": dataset_ids.values()})
-df2 = pd.read_html("https://naif.jpl.nasa.gov/naif/data_archived.html")[6]
-df2.columns = df2.iloc[0]
-df2 = df2.drop(0).reset_index(drop=True)
-df2 = df2.drop(["Archive Readme", "Archive Link", "Subset Link"], axis=1)
-df = df.join(df2)
-
-# Now available as `from planetarypy.spice.kernerls import datasets`
-datasets = df.set_index("shorthand")  
+datasets = pd.read_csv(datasets_url).set_index("shorthand")
 
 
 ## Validation helpers
@@ -107,7 +71,7 @@ def is_stop_valid(mission: str, stop: Time) -> bool:
         Mission shorthand label of datasets dataframe.
     start : astropy.Time
         Start time in astropy.Time format.
-    """   
+    """
     return Time(datasets.at[mission, "Stop Time"]) >= stop
 
 
@@ -116,9 +80,9 @@ def is_stop_valid(mission: str, stop: Time) -> bool:
 # - the dataset name
 # - start and stop of the time interval
 # - a constant named "Subset" to identify the action for this Perl script
-# We can assemble these parameters into a payload dictionary for the 
-# requests.get call and we manage different potential actions on the zipfile 
-# with a Subsetter class, that only requires the mission identifier, start and 
+# We can assemble these parameters into a payload dictionary for the
+# requests.get call and we manage different potential actions on the zipfile
+# with a Subsetter class, that only requires the mission identifier, start and
 # stop as parameters.
 NAIF_URL = URL("https://naif.jpl.nasa.gov")
 BASE_URL = NAIF_URL / "cgi-bin/subsetds.pl"
@@ -135,7 +99,7 @@ class Subsetter:
     """
     Class to manage retrieving subset SPICE kernel lists.
 
-    
+
     Attributes
     ----------
     kernel_names: List of names of kernels for the given time range.
@@ -148,7 +112,8 @@ class Subsetter:
         Get metakernel file from NAIF and adjust paths to match local storage.
 
     """
-    def __init__(self, mission: str,  start: str, stop=None, save_location=None):
+
+    def __init__(self, mission: str, start: str, stop=None, save_location=None):
         """
         Initialize the Subsetter object.
 
@@ -220,8 +185,13 @@ class Subsetter:
         Time-unsupported yyyy-jjj format, which can be converted by `nasa_time_to_iso`
         from `planetarypy.utils`.
         """
-        if not (is_start_valid(self.mission, self.start) and is_stop_valid(self.mission, self.stop)):
-            raise ValueError("One of start/stop is outside the supported date-range. See `datasets`.")
+        if not (
+            is_start_valid(self.mission, self.start)
+            and is_stop_valid(self.mission, self.stop)
+        ):
+            raise ValueError(
+                "One of start/stop is outside the supported date-range. See `datasets`."
+            )
         p = {
             "dataset": dataset_ids[self.mission],
             "start": self.start.iso,
@@ -233,22 +203,26 @@ class Subsetter:
     @property
     def kernel_names(self):
         "Return list of names of kernels for the given time range."
-        return [str(Path(URL(url).parent.name) / URL(url).name) for url in self.kernel_urls]
+        return [
+            str(Path(URL(url).parent.name) / URL(url).name) for url in self.kernel_urls
+        ]
 
     def get_local_path(self, url) -> Path:
         """
-        Return local storage path from Kernel URL. 
-        
+        Return local storage path from Kernel URL.
+
         Uses self.save_location if given.
 
         Parameters
         ----------
         url : str
-            URL of the kernel file.        
+            URL of the kernel file.
         """
         u = URL(url)
         basepath = (
-            KERNEL_STORAGE / self.mission if not self.save_location else self.save_location
+            KERNEL_STORAGE / self.mission
+            if not self.save_location
+            else self.save_location
         )
         return basepath / u.parent.name / u.name
 
@@ -271,7 +245,8 @@ class Subsetter:
 
     def download_kernels(
         self,
-        overwrite: bool = False, non_blocking: bool = False,
+        overwrite: bool = False,
+        non_blocking: bool = False,
         quiet: bool = False,
     ):
         """
@@ -285,7 +260,7 @@ class Subsetter:
             Use Dask client for parallel download. Defaults to False.
         quiet : bool, optional
             Suppress name and path of downloaded kernels. Defaults to False.
-        
+
         """
         if non_blocking:
             return self._non_blocking_download(overwrite)
@@ -306,9 +281,15 @@ class Subsetter:
 
         Uses self.save_location if given, otherwise `planetarypy` archive.
         """
-        basepath = (KERNEL_STORAGE / self.mission if not self.save_location else self.save_location)
+        basepath = (
+            KERNEL_STORAGE / self.mission
+            if not self.save_location
+            else self.save_location
+        )
         savepath = basepath / self.metakernel_file
-        with open(savepath, "w") as outfile, self.z.open(self.metakernel_file) as infile:
+        with open(savepath, "w") as outfile, self.z.open(
+            self.metakernel_file
+        ) as infile:
             for line in infile:
                 linestr = line.decode()
                 if "'./data'" in linestr:
@@ -318,15 +299,11 @@ class Subsetter:
 
 
 def get_metakernel_and_files(
-        mission: str,
-        start: str,
-        stop: str,
-        save_location: str = None,
-        quiet: bool = False
+    mission: str, start: str, stop: str, save_location: str = None, quiet: bool = False
 ) -> Path:
     """
     For a given mission and start/stop times, download the kernels and get metakernel path.
-    
+
     Parameters
     ----------
     mission : str
@@ -340,7 +317,7 @@ def get_metakernel_and_files(
     quiet : bool, optional
         Suppress download feedback. Defaults to False.
     """
-    
+
     subset = Subsetter(mission, start, stop, save_location)
     subset.download_kernels(non_blocking=True, quiet=quiet)
     return subset.get_metakernel()
@@ -364,7 +341,7 @@ def list_kernels_for_day(mission: str, start: str, stop: str = "") -> list:
 
 
 ## Generic kernel management
-# These are a few generic kernels that are required for basic illumination 
+# These are a few generic kernels that are required for basic illumination
 # calculations as supported by this package.
 GENERIC_STORAGE = KERNEL_STORAGE / "generic"
 GENERIC_STORAGE.mkdir(exist_ok=True, parents=True)
@@ -385,7 +362,10 @@ def download_generic_kernels(overwrite=False):
     dl_urls = [GENERIC_URL / i for i in generic_kernel_names]
     for dl_url, savepath in zip(dl_urls, generic_kernel_paths):
         if savepath.exists() and not overwrite:
-            print(savepath.name, "already downloaded. Use `overwrite=True` to download again.")
+            print(
+                savepath.name,
+                "already downloaded. Use `overwrite=True` to download again.",
+            )
             continue
         savepath.parent.mkdir(exist_ok=True, parents=True)
         url_retrieve(dl_url, savepath)
