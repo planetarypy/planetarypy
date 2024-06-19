@@ -47,7 +47,7 @@ from tqdm.contrib.concurrent import process_map
 from yarl import URL
 
 from ..config import config
-from ..datetime import nasa_time_to_iso
+from ..datetime import fromdoyformat
 from ..utils import url_retrieve
 
 KERNEL_STORAGE = config.storage_root / "spice_kernels"
@@ -171,7 +171,7 @@ class Subsetter:
         try:
             self._start = Time(value)
         except ValueError:
-            self._start = Time(nasa_time_to_iso(value))
+            self._start = Time(fromdoyformat(value).isoformat())
 
     @property
     def stop(self):
@@ -185,14 +185,14 @@ class Subsetter:
             try:
                 self._stop = Time(value)
             except ValueError:
-                self._stop = Time(nasa_time_to_iso(value))
+                self._stop = Time(fromdoyformat(value).isoformat())
 
     @property
     def payload(self):
         """Put payload together while checking for working time format.
 
         If Time(self.start) doesn't work, then we assume that the date must be in the
-        Time-unsupported yyyy-jjj format, which can be converted by `nasa_time_to_iso`
+        Time-unsupported yyyy-jjj format, which can be converted by `fromdoyformat`
         from `planetarypy.utils`.
         """
         if not (

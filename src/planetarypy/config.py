@@ -1,17 +1,15 @@
 __all__ = ["config", "reset_non_urls", "Config"]
 
-import copy
 import json
 import os
 import shutil
 from collections.abc import Mapping
-from datetime import datetime
 from functools import reduce
 from importlib.resources import files
 from pathlib import Path
 from typing import Union
 
-import tomlkit as toml
+import toml
 
 
 def reset_non_urls(
@@ -26,7 +24,7 @@ def reset_non_urls(
     for key, value in source.items():
         if isinstance(value, Mapping) and value:
             reset_non_urls(value, reset)
-        elif not "url" in key:
+        elif "url" not in key:
             source[key] = reset
     return source
 
@@ -53,7 +51,6 @@ class Config:
             p = files("planetarypy.data").joinpath(self.fname)
             shutil.copy(p, self.path)
         self._read_config()
-        self._update_configfile()
 
     def _read_config(self):
         """Read the configfile and store config dict.
@@ -85,10 +82,9 @@ class Config:
             return ""
 
     def get_value(
-        self, key: str  # A nested key in dotted format, e.g. cassini.uvis.indexes
-    ) -> (
-        str
-    ):  # Returning empty string if not existing, because Path('') is False which is handy (e.g. in ctx mod.)
+        self,
+        key: str,  # A nested key in dotted format, e.g. cassini.uvis.indexes
+    ) -> str:  # Returning empty string if not existing, because Path('') is False which is handy (e.g. in ctx mod.)
         """Get sub-dictionary by nested key."""
         if not key.startswith("missions"):
             key = "missions." + key
@@ -126,17 +122,6 @@ class Config:
         self.path.write_text(toml.dumps(self.tomldoc))
 
     @property
-    def current_backup_name(self):
-        """Time-tagged backup filename"""
-        now = datetime.now().isoformat()
-        return self.path.with_suffix(f".{now[:16]}.bak")
-
-    def make_backup_copy(self):
-        now = datetime.now().isoformat()
-        newfname = self.current_backup_name
-        shutil.copy(self.path, newfname)
-
-    @property
     def missions(self):
         return list(self.d["missions"].keys())
 
@@ -163,40 +148,6 @@ class Config:
             instrument = "missions." + instrument
         indexes = self.get_value(instrument + ".indexes")
         return list(indexes)
-
-    def _copy_clean_to_resource(self):
-        """Copy a clean config file without timestamps or paths into resource path for repo commit."""
-        dic = reset_non_urls(self.d, "")
-        files("planetarypy.data").joinpath(self.fname).write_text(toml.dumps(dic))
-
-    def _update_configfile(self):
-        """Check if a new version with more URLs exist at resource path."""
-        p = files("planetarypy.data").joinpath(self.fname)
-        new = toml.loads(p.read_text())["missions"]
-        old = self.tomldoc["missions"]
-        for mission in new:
-            missiondata = new[mission]
-            if mission not in old:
-                old[mission] = missiondata
-                continue
-            for instr in missiondata:
-                instrdata = missiondata[instr]
-                if instr not in old[mission]:
-                    old[mission][instr] = instrdata
-                    continue
-                for index in instrdata["indexes"]:
-                    indexdata = instrdata["indexes"][index]
-                    if index not in old[mission][instr]["indexes"]:
-                        old[mission][instr]["indexes"][index] = indexdata
-                        continue
-                    oldindexdata = old[mission][instr]["indexes"][index]
-                    if indexdata["url"] != oldindexdata["url"]:
-                        oldindexdata["url"] = indexdata["url"]
-        self.make_backup_copy()
-        self.save()
-
-    def populate_timestamps(self):
-        pass
 
     def __repr__(self):
         return json.dumps(self.d, indent=2)
