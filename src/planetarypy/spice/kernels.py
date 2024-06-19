@@ -1,4 +1,15 @@
-"""SPICE kernels management."""
+"""SPICE kernels management.
+
+To access subsets of datasets, wrap the NAIF server's subsetds.pl script.
+The Perl script subsetds.pl (see BASE_URL below) requires as input:
+- the dataset name
+- start and stop of the time interval
+- a constant named "Subset" to identify the action for this Perl script
+We can assemble these parameters into a payload dictionary for the
+requests.get call and we manage different potential actions on the zipfile
+with a Subsetter class, that only requires the mission identifier, start and
+stop as parameters.
+"""
 
 __all__ = [
     "KERNEL_STORAGE",
@@ -36,7 +47,8 @@ from tqdm.contrib.concurrent import process_map
 from yarl import URL
 
 from ..config import config
-from ..utils import nasa_time_to_iso, url_retrieve
+from ..datetime import nasa_time_to_iso
+from ..utils import url_retrieve
 
 KERNEL_STORAGE = config.storage_root / "spice_kernels"
 KERNEL_STORAGE.mkdir(exist_ok=True, parents=True)
@@ -44,6 +56,9 @@ KERNEL_STORAGE.mkdir(exist_ok=True, parents=True)
 datasets_url = "https://raw.githubusercontent.com/planetarypy/planetarypy_configs/main/archived_spice_kernel_sets.csv"
 
 datasets = pd.read_csv(datasets_url).set_index("shorthand")
+
+NAIF_URL = URL("https://naif.jpl.nasa.gov")
+BASE_URL = NAIF_URL / "cgi-bin/subsetds.pl"
 
 
 ## Validation helpers
@@ -75,19 +90,6 @@ def is_stop_valid(mission: str, stop: Time) -> bool:
     return Time(datasets.at[mission, "Stop Time"]) >= stop
 
 
-# To access subsets of datasets, wrap the NAIF server's subsetds.pl script.
-# The Perl script subsetds.pl (see BASE_URL below) requires as input:
-# - the dataset name
-# - start and stop of the time interval
-# - a constant named "Subset" to identify the action for this Perl script
-# We can assemble these parameters into a payload dictionary for the
-# requests.get call and we manage different potential actions on the zipfile
-# with a Subsetter class, that only requires the mission identifier, start and
-# stop as parameters.
-NAIF_URL = URL("https://naif.jpl.nasa.gov")
-BASE_URL = NAIF_URL / "cgi-bin/subsetds.pl"
-
-
 def download_one_url(url, local_path, overwrite: bool = False):
     if local_path.exists() and not overwrite:
         return
@@ -117,6 +119,9 @@ class Subsetter:
         """
         Initialize the Subsetter object.
 
+        This means that the object at initialization (via internal method below) receives all required
+        metadata to query infos, but doesn't do downloading automatically.
+
         Parameters
         ----------
         mission : str
@@ -132,9 +137,10 @@ class Subsetter:
         self.start = start
         self.stop = stop
         self.save_location = save_location
-        self.initialize()
+        self._initialize()
 
-    def initialize(self):
+    def _initialize(self):
+        "get metadata via self.r and unpack it."
         r = self.r
         if r.ok:
             z = zipfile.ZipFile(BytesIO(r.content))
@@ -150,6 +156,10 @@ class Subsetter:
 
     @property
     def r(self):
+        """This is the main remote request, fired up at each access.
+
+        It uses the property `payload` to create the required request's parameters.
+        """
         return requests.get(BASE_URL, params=self.payload, stream=True)
 
     @property
@@ -193,7 +203,7 @@ class Subsetter:
                 "One of start/stop is outside the supported date-range. See `datasets`."
             )
         p = {
-            "dataset": dataset_ids[self.mission],
+            "dataset": datasets.loc[self.mission, "path"],
             "start": self.start.iso,
             "stop": self.stop.iso,
             "action": "Subset",
@@ -227,6 +237,7 @@ class Subsetter:
         return basepath / u.parent.name / u.name
 
     def _non_blocking_download(self, overwrite: bool = False):
+        "Use dask for a parallel download."
         with Client() as client:
             futures = []
             for url in tqdm(self.kernel_urls, desc="Kernels downloaded"):
@@ -241,7 +252,7 @@ class Subsetter:
     def _concurrent_download(self, overwrite: bool = False):
         paths = [self.get_local_path(url) for url in self.kernel_urls]
         args = zip(self.kernel_urls, paths, repeat(overwrite))
-        results = process_map(download_one_url, args, max_workers=cpu_count() - 2)
+        _ = process_map(download_one_url, args, max_workers=cpu_count() - 2)
 
     def download_kernels(
         self,
