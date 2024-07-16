@@ -58,6 +58,7 @@ class TestDOY(unittest.TestCase):
         orddt = ppydt.fromdoyformat(ordinal_date)
         self.assertEqual(datetime.datetime.isoformat(orddt), "2010-04-20T00:00:00")
         self.assertEqual(orddt.date().isoformat(), "2010-04-20")
+        self.assertEqual(orddt.isoformat(), "2010-04-20T00:00:00")
 
         # test_calendar_to_ordinal_time(calendar_datetimes, ordinal_datetimes):
         self.assertEqual(

@@ -30,6 +30,11 @@ https://michaelaye.github.io/nbplanetary where the documentation for the current
 * Part of the `PlanetaryPy`_ Organisation.
 
 
+Installation
+------------
+
+`pip install git@github.com:planetarypy/planetarypy`
+
 General scope
 -------------
 

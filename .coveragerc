@@ -1,0 +1,4 @@
+[run]
+omit =
+	# ignore all test modules
+	tests/*

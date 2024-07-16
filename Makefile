@@ -54,7 +54,8 @@ lintblack: ## check style with black
 	black --check src/planetarypy tests
 
 test: ## run tests quickly with the default Python
-	pytest
+	jupyter nbconvert --to python tests/test_*.ipynb
+	pytest --cov
 
 test-all: ## run tests on every Python version with tox
 	tox
