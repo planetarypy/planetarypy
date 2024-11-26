@@ -131,3 +131,4 @@ dmypy.json
 # pixi environments
 .pixi
 *.egg-info
+*.code-workspace
