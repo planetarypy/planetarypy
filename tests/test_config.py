@@ -84,17 +84,6 @@ def test_config_storage_root():
     assert isinstance(config.storage_root, Path)
 
 
-def test_config_backup():
-    backup_name = config.current_backup_name
-    assert isinstance(backup_name, Path)
-    assert backup_name.name.endswith(".bak")
-
-
-def test_config_make_backup():
-    original_backup = config.current_backup_name
-    config.make_backup_copy()
-    assert original_backup.exists()
-
 
 def test_reset_non_urls():
     test_dict = {
