@@ -15,9 +15,38 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - uses: prefix-dev/setup-pixi@v0.8.1
+    - name: Setup Conda
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        pixi-version: v0.25.0
-        cache: true
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: test_env
+        use-mamba: true
+        python-version: "3.9"
 
-    - run: pixi run test
+    - name: Cache conda env
+      uses: actions/cache@v3
+      with:
+        path: |
+          /usr/share/miniconda/envs/test_env
+          ~/.conda/pkgs
+        key: conda-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          conda-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |
+        # Install dependencies from pyproject.toml
+        mamba install -y -c conda-forge \
+          tomlkit \
+          requests \
+          tqdm \
+          pandas \
+          pytest \
+          make
+
+    - name: Run tests
+      shell: bash -l {0}
+      run: |
+        make test
