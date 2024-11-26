@@ -23,13 +23,16 @@ jobs:
         activate-environment: test_env
         use-mamba: true
         python-version: "3.9"
+        channels: conda-forge
+        channel-priority: strict
+        conda-remove-defaults: true
 
     - name: Cache conda env
       uses: actions/cache@v3
       with:
         path: |
-          /usr/share/miniconda/envs/test_env
-          ~/.conda/pkgs
+          ${{ env.CONDA }}/envs/test_env
+          ${{ env.CONDA }}/pkgs
         key: conda-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           conda-${{ runner.os }}-
