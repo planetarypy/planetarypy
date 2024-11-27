@@ -32,11 +32,11 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          $CONDA/envs/test_env
-          $CONDA/pkgs
-        key: conda-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          /usr/share/miniconda/pkgs
+          /usr/share/miniconda/envs
+        key: ${{ runner.os }}-conda-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('install_dev_deps.py') }}
         restore-keys: |
-          conda-${{ runner.os }}-
+          ${{ runner.os }}-conda-
 
     - name: Install dependencies
       shell: bash -l {0}
