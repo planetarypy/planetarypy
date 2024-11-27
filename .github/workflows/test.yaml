@@ -23,7 +23,7 @@ jobs:
         activate-environment: test_env
         use-mamba: true
         python-version: "3.9"
-        channels: conda-forge
+        channels: conda-forge,nodefaults
         channel-priority: strict
         auto-activate-base: false
         conda-remove-defaults: true
