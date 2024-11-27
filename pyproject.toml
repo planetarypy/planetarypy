@@ -30,6 +30,9 @@ dependencies = [
     "tqdm",
     "pandas",
     "astropy",
+    "spiceypy",
+    "yarl",
+    "matplotlib",
 ]
 repository = "https://github.com/planetarypy/planetarypy"
 
