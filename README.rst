@@ -11,6 +11,7 @@ planetarypy
 
 .. image:: https://codecov.io/gh/planetarypy/planetarypy/branch/main/graph/badge.svg
         :target: https://codecov.io/gh/planetarypy/planetarypy
+        
 Core package for planetary science tools.
 
 Warning
