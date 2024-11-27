@@ -1,4 +1,11 @@
 [run]
-omit =
-	# ignore all test modules
-	tests/*
+source = src/planetarypy
+omit = 
+    tests/*
+    setup.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
