@@ -41,7 +41,6 @@ import pandas as pd
 import requests
 import spiceypy as spice
 from astropy.time import Time
-from dask.distributed import Client
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 from yarl import URL
@@ -237,17 +236,11 @@ class Subsetter:
         return basepath / u.parent.name / u.name
 
     def _non_blocking_download(self, overwrite: bool = False):
-        "Use dask for a parallel download."
-        with Client() as client:
-            futures = []
-            for url in tqdm(self.kernel_urls, desc="Kernels downloaded"):
-                local_path = self.get_local_path(url)
-                if local_path.exists() and not overwrite:
-                    print(local_path.parent.name, local_path.name, "locally available.")
-                    continue
-                local_path.parent.mkdir(exist_ok=True, parents=True)
-                futures.append(client.submit(url_retrieve, url, local_path))
-            return [f.result() for f in futures]
+        "Use multiprocessing for parallel download."
+        paths = [self.get_local_path(url) for url in self.kernel_urls]
+        args = zip(self.kernel_urls, paths, repeat(overwrite))
+        _ = process_map(download_one_url, args, max_workers=cpu_count() - 2, 
+                       desc="Kernels downloaded")
 
     def _concurrent_download(self, overwrite: bool = False):
         paths = [self.get_local_path(url) for url in self.kernel_urls]
