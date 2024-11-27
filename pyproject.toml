@@ -29,6 +29,7 @@ dependencies = [
     "requests",
     "tqdm",
     "pandas",
+    "astropy",
 ]
 repository = "https://github.com/planetarypy/planetarypy"
 
