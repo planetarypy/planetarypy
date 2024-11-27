@@ -23,7 +23,7 @@ jobs:
         activate-environment: test_env
         use-mamba: true
         python-version: "3.9"
-        channels: conda-forge,nodefaults
+        channels: conda-forge
         channel-priority: strict
         auto-activate-base: false
         conda-remove-defaults: true
@@ -32,8 +32,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          /usr/share/miniconda/pkgs
-          /usr/share/miniconda/envs
+          ~/.conda/pkgs
+          ~/.conda/envs
         key: conda-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.sha }}
         restore-keys: |
           conda-${{ runner.os }}-py${{ matrix.python-version }}-
