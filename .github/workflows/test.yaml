@@ -25,6 +25,7 @@ jobs:
         python-version: "3.9"
         channels: conda-forge
         channel-priority: strict
+        auto-activate-base: false
         conda-remove-defaults: true
 
     - name: Cache conda env
