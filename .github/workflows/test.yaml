@@ -34,9 +34,10 @@ jobs:
         path: |
           /usr/share/miniconda/pkgs
           /usr/share/miniconda/envs
-        key: ${{ runner.os }}-conda-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('install_dev_deps.py') }}
+        key: conda-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-conda-
+          conda-${{ runner.os }}-py${{ matrix.python-version }}-
+          conda-${{ runner.os }}-
 
     - name: Install dependencies
       shell: bash -l {0}
