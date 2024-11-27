@@ -40,15 +40,22 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        # Install dependencies from pyproject.toml
-        mamba install -y -c conda-forge \
-          tomlkit \
-          requests \
-          tqdm \
-          pandas \
-          pytest \
-          make \
-          pip
+        # Install tomlkit first to read pyproject.toml
+        mamba install -y -c conda-forge tomlkit pip make
+        
+        # Use Python to get dependencies from pyproject.toml
+        DEPS=$(python -c "
+        import tomlkit
+        with open('pyproject.toml', 'r') as f:
+            pyproject = tomlkit.load(f)
+        deps = pyproject['project']['dependencies']
+        dev_deps = pyproject['project']['optional-dependencies']['dev']
+        all_deps = deps + dev_deps
+        print(' '.join(all_deps))
+        ")
+        
+        # Install all dependencies
+        mamba install -y -c conda-forge $DEPS
 
     - name: Install package
       shell: bash -l {0}

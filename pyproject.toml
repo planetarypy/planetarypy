@@ -35,9 +35,11 @@ repository = "https://github.com/planetarypy/planetarypy"
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-cov",
     "build",
     "twine",
-    "pip-tools"
+    "pip-tools",
+    "make"
 ]
 
 [project.scripts]
