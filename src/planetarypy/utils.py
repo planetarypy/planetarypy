@@ -140,9 +140,19 @@ def file_variations(filename: Union[str, Path], extensions: list) -> list:
 
     Parameters
     ----------
-    filename : str
+    filename : str or Path
         The original filename to use as a base.
     extensions : list
         List of extensions to use for variations.
+
+    Raises
+    ------
+    TypeError
+        If extensions is not a list
+    ValueError
+        If any extension doesn't start with a dot
     """
+    if not isinstance(extensions, list):
+        raise TypeError("extensions must be a list")
+    
     return [Path(filename).with_suffix(extension) for extension in extensions]

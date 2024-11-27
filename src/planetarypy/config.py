@@ -9,7 +9,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Union
 
-import toml
+import tomlkit
 
 
 def reset_non_urls(
@@ -57,7 +57,7 @@ class Config:
 
         `storage_root` will be stored as attribute.
         """
-        self.tomldoc = toml.loads(self.path.read_text())
+        self.tomldoc = tomlkit.loads(self.path.read_text())
         if not self.tomldoc["storage_root"]:
             path = Path.home() / "planetarypy_data"
             path.mkdir(exist_ok=True)
@@ -78,7 +78,7 @@ class Config:
             key = "missions." + key
         try:
             return reduce(lambda c, k: c[k], key.split("."), self.d)
-        except toml.exceptions.NonExistentKey:
+        except KeyError:
             return ""
 
     def get_value(
@@ -90,7 +90,7 @@ class Config:
             key = "missions." + key
         try:
             return reduce(lambda c, k: c[k], key.split("."), self.d)
-        except toml.exceptions.NonExistentKey:
+        except KeyError:
             return ""
 
     def set_value(
@@ -119,7 +119,7 @@ class Config:
 
     def save(self):
         """Write the TOML doc to file."""
-        self.path.write_text(toml.dumps(self.tomldoc))
+        self.path.write_text(tomlkit.dumps(self.tomldoc))
 
     @property
     def missions(self):

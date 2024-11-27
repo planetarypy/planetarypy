@@ -9,6 +9,8 @@ planetarypy
         :target: https://planetarypy.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+.. image:: https://codecov.io/gh/planetarypy/planetarypy/branch/main/graph/badge.svg
+        :target: https://codecov.io/gh/planetarypy/planetarypy
 Core package for planetary science tools.
 
 Warning
